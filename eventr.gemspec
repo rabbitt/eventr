@@ -23,7 +23,7 @@ $:.unshift(lib) unless $:.include?(lib)
 require 'eventr/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "Eventr"
+  spec.name          = "eventr"
   spec.version       = Eventr::VERSION
   spec.authors       = ["Carl P. Corliss"]
   spec.email         = ["rabbitt@gmail.com"]
