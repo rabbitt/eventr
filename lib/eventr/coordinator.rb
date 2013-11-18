@@ -40,6 +40,11 @@ module Eventr
       @publishers[queue_name] = Publisher.new(&block)
     end
 
+    def publish(queue_name, event)
+      raise InvalidQueue, "Publisher #{queue_name.inspect} doesn't exist" unless @publishers.include? queue_name
+      @publishers[queue_name].push(event)
+    end
+
     def consumer(queue_name, &block)
       raise InvalidQueue, "#{queue_name} queue does not exist. Define a publisher for the queue first." unless @publishers.include? queue_name
       @consumers[queue_name] ||= []

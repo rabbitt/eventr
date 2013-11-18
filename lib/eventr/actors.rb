@@ -126,6 +126,11 @@ module Eventr
     def main
       block.call(events)
     end
+
+    def push(event)
+      @events << event
+    end
+    alias :publish :push
   end
 
   class Consumer < SupervisedObject
