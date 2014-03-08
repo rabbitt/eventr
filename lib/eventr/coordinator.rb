@@ -34,6 +34,10 @@ module Eventr
       instance.public_send(method, *args, &block)
     end
 
+    def publishers(*queues)
+      queues.each { |queue| publisher(queue) }
+    end
+
     def publisher(queue_name, &block)
       if @publishers.include? queue_name
         fail Error::InvalidQueue, "publisher already defined for queue '#{queue_name}'"
