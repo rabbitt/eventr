@@ -21,6 +21,8 @@ require 'monitor'
 
 module Eventr
   class SupervisedObject
+    attr_reader :on_exception
+
     def stop
       threads.values.each { |t| t.send :kill }
     end
@@ -30,27 +32,31 @@ module Eventr
       start_supervisor_thread
     end
 
-    def threads() @threads ||= {}; end
-    def application() threads[:application]; end
-    def supervisor() threads[:supervisor]; end
-
-    def on_exception
-      @on_exception
+    def threads
+      @threads ||= {}
     end
 
-    def on_exception=(&block)
+    def application
+      threads[:application]
+    end
+
+    def supervisor
+      threads[:supervisor]
+    end
+
+    def on_exception=(&block) # rubocop:disable TrivialAccessors
       @on_exception = block
     end
 
     def sleep_time_from_backoff
       backoff = Thread.current[:backoff] || 0
-      (0..backoff).inject([1,0]) { |(a,b), _| [b, a+b] }[0]
+      (0..backoff).inject([1, 0]) { |(a, b), _| [b, a + b] }[0]
     end
 
     def start_application_thread
-      threads[:application] ||= Thread.new {
+      threads[:application] ||= Thread.new do
         begin
-          main()
+          main
         rescue StandardError => e
           on_exception.call(e) if on_exception.respond_to? :call
           warn "#{e.class.name}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
@@ -58,17 +64,17 @@ module Eventr
         ensure
           threads[:supervisor].wakeup # wakeup the supervisor to help us recover
         end
-      }
+      end
     end
 
-    def start_supervisor_thread
-      threads[:supervisor] ||= Thread.new {
+    def start_supervisor_thread # rubocop:disable MethodLength
+      threads[:supervisor] ||= Thread.new do
         Thread.current[:backoff] = 1
 
         begin
           runs = 5
-          loop {
-            unless (application && application.alive?)
+          loop do
+            unless application && application.alive?
               puts "#{self.class.name}::Supervisor: cleaning up app thread and restarting it."
               threads[:application] = nil
               start_application_thread
@@ -87,7 +93,7 @@ module Eventr
             end
 
             sleep 1
-          }
+          end
 
         rescue StandardError => e
           warn "#{e.class.name}: #{e.message}\n\t#{e.backtrace.join("\n\t")}"
@@ -101,11 +107,12 @@ module Eventr
           end
 
           # if the supervisor goes away, take the whole thing down.
-          threads[:application].raise SupervisorDown, "supervisor went away due to: #{e.class.name}: #{e.message} -> #{e.backtrace.first}"
+          error_msg = "supervisor went away due to: #{e.class.name}: #{e.message} -> #{e.backtrace.first}"
+          threads[:application].raise Error::SupervisorDown, error_msg
 
           raise e
         end
-      }
+      end
     end
   end
 
@@ -114,14 +121,14 @@ module Eventr
     private :block, :events
 
     def initialize(&block)
-      @block   = block
+      @block   = block || method(:default_loop)
       @events  = Queue.new
     end
 
-    def pop(non_block=false)
+    def pop(non_block = false)
       events.pop(non_block)
     end
-    alias :shift :pop
+    alias_method :shift, :pop
 
     def main
       block.call(events)
@@ -130,7 +137,12 @@ module Eventr
     def push(event)
       @events << event
     end
-    alias :publish :push
+    alias_method :publish, :push
+
+    def default_loop
+      loop { Thread.stop }
+    end
+    private :default_loop
   end
 
   class Consumer < SupervisedObject
@@ -146,5 +158,4 @@ module Eventr
       loop { block.call(publisher.pop) }
     end
   end
-
 end

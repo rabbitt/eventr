@@ -17,7 +17,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 =end
 
 module Eventr
-  class Error < ::StandardError; end
-  class InvalidQueue < Error; end
-  class SupervisorDown < Error; end
+  class Error < ::StandardError
+    class InvalidQueue < Error; end
+    class SupervisorDown < Error; end
+  end
 end
