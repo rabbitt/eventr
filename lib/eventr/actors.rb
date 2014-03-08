@@ -139,7 +139,7 @@ module Eventr
     end
     alias_method :publish, :push
 
-    def default_loop
+    def default_loop(events)
       loop { Thread.stop }
     end
     private :default_loop
