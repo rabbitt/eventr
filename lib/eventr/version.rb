@@ -17,5 +17,5 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 =end
 
 module Eventr
-  VERSION = "0.2.0"
+  VERSION = '0.2.1'
 end
