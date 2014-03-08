@@ -19,6 +19,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 require 'eventr/version'
 
 module Eventr
-  autoload :Coordinator, 'eventr/coordinator'
-  autoload :Error,       'eventr/errors'
+  autoload :Consumer,         'eventr/actors'
+  autoload :Publisher,        'eventr/actors'
+  autoload :SupervisedObject, 'eventr/actors'
+  autoload :Coordinator,      'eventr/coordinator'
+  autoload :Error,            'eventr/errors'
 end
